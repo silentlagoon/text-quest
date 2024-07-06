@@ -2,7 +2,7 @@
 
 require '../vendor/autoload.php';
 
-use App\Entities\Player;
+use App\Entities\Living\Player;
 use App\Game;
 
 $playersAvailable = collect([

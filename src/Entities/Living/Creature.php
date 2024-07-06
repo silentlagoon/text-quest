@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Entities;
+namespace App\Entities\Living;
 
-class Player
+class Creature
 {
     protected string $name;
     protected int $hitPoints;
