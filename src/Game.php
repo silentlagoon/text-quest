@@ -2,10 +2,15 @@
 
 namespace App;
 
+use App\Contracts\Views\UI\StatusBar\IStatusBarElement;
+use App\Entities\Living\Creature;
 use App\Entities\Living\Player;
 use App\Entities\Quest\Room;
 use App\Events\FightEvent;
 use App\Views\PlayerView;
+use App\Views\UI\StatusBar\DamageView;
+use App\Views\UI\StatusBar\HitPointsView;
+use App\Views\UI\StatusBar\NameView;
 use Illuminate\Support\Collection;
 use raylib\Color;
 use raylib\Font;
@@ -35,16 +40,25 @@ class Game
 
     public function start()
     {
-        $lightGray    = new Color(245, 245, 245, 255);
+        $lightGray = new Color(245, 245, 245, 255);
 
         InitWindow(static::SCREEN_WIDTH, static::SCREEN_HEIGHT, "Dungeon explorers");
 
         SetTargetFPS(60);
 
+        $uiElements = [
+            new NameView(),
+            new HitPointsView(),
+            new DamageView()
+        ];
+
         while (!WindowShouldClose())
         {
             //Updating variables Before BeginDrawing()
             $selectionScreenPlayers = $this->getSelectionScreenPlayers();
+            if ($this->isCurrentPlayerSelected()) {
+                $this->setUIElements($uiElements);
+            }
 
             BeginDrawing();
 
@@ -55,7 +69,7 @@ class Game
                 }
 
                 if ($this->isCurrentPlayerSelected()) {
-                    $this->drawMainScreenScene();
+                    $this->drawMainScreenScene($uiElements);
                 }
 
             EndDrawing();
@@ -83,56 +97,16 @@ class Game
     {
         /** @var PlayerView $playerView */
         foreach ($selectionScreenPlayers as $playerView) {
-
-            $collision = CheckCollisionPointRec(GetMousePosition(), $playerView->getRectangle());
-
-            DrawText(
-                $playerView->getPlayer()->getName(),
-                GetScreenWidth() / 2,
-                (GetScreenHeight() / 2) - $playerView->getNamePositionDelta(),
-                20,
-                $collision ? Color::SKYBLUE() : Color::BLACK()
-            );
-
-            if ($collision) {
-                if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                    $this->setCurrentPlayer($playerView->getPlayer());
-                }
-            }
-
+            $playerView->draw();
         }
     }
 
-    protected function drawPlayerStatusBar(): void
+    protected function drawPlayerStatusBar(array $uiElements): void
     {
-        $textFontSize = 20;
-        $textStartPositionX = 10;
-
-        $playerNameString = $this->getCurrentPlayer()->getName() . ': ';
-        DrawText(
-            $playerNameString,
-            $textStartPositionX,
-            0,
-            $textFontSize,
-            Color::SKYBLUE()
-        );
-
-        $playerHitPointsString = 'HP ' . $this->getCurrentPlayer()->getHitPoints() . ' ';
-        DrawText(
-            $playerHitPointsString,
-            MeasureText($playerNameString, $textFontSize) + $textStartPositionX,
-            0,
-            $textFontSize,
-            Color::GREEN()
-        );
-
-        DrawText(
-            'DMG ' . $this->getCurrentPlayer()->getDamage(),
-            MeasureText($playerNameString . $playerHitPointsString, $textFontSize) + $textStartPositionX,
-            0,
-            $textFontSize,
-            Color::MAROON()
-        );
+        /** @var IStatusBarElement $element */
+        foreach ($uiElements as $element) {
+            $element->draw();
+        }
     }
 
     protected function drawCurrentRoom()
@@ -211,10 +185,9 @@ class Game
         }
     }
 
-
-    protected function drawMainScreenScene(): void
+    protected function drawMainScreenScene(array $uiElements): void
     {
-        $this->drawPlayerStatusBar();
+        $this->drawPlayerStatusBar($uiElements);
 
         $this->drawCurrentRoom();
     }
@@ -222,10 +195,10 @@ class Game
     protected function getSelectionScreenPlayers(): array
     {
         $selectionScreenPlayers = [];
-
         $playerNamePositionDelta = 30;
 
         foreach ($this->playersAvailable as $player) {
+
             $playerRectangle = new Rectangle(
                 GetScreenWidth() / 2,
                 (GetScreenHeight() / 2) - $playerNamePositionDelta,
@@ -233,13 +206,23 @@ class Game
                 20
             );
 
-            $selectionScreenPlayers[] = (new PlayerView())
+            $playerView = (new PlayerView())
                 ->setPlayer($player)
                 ->setRectangle($playerRectangle)
                 ->setColor(new Color(0, 0, 0, 0))
                 ->setNamePositionDelta($playerNamePositionDelta);
 
+            $playerView->checkCollision();
+
+            if ($playerView->getCollision()) {
+                if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                    $this->setCurrentPlayer($player);
+                }
+            }
+
+            $selectionScreenPlayers[] = $playerView;
             $playerNamePositionDelta += 30;
+
         }
 
         return $selectionScreenPlayers;
@@ -278,5 +261,47 @@ class Game
     public function setCurrentRoom(Room $room): void
     {
         $this->currentRoom = $room;
+    }
+
+    protected function setUIElements(array $uiElement): void
+    {
+        $textFontSize = 20;
+        $textStartPositionX = 10;
+
+        $playerNameString = $this->getCurrentPlayer()->getName() . ': ';
+        $playerHitPointsString = 'HP ' . $this->getCurrentPlayer()->getHitPoints() . ' ';
+        $playerDamageString = 'DMG ' . $this->getCurrentPlayer()->getDamage();
+
+        $playerHitPointsPosX = MeasureText($playerNameString, $textFontSize) + $textStartPositionX;
+        $playerDamagePosX = MeasureText($playerNameString . $playerHitPointsString, $textFontSize) + $textStartPositionX;
+
+        foreach ($uiElement as $element) {
+            if ($element instanceof NameView) {
+                $element
+                    ->setName($playerNameString)
+                    ->setPosX($textStartPositionX)
+                    ->setPosY(0)
+                    ->setFontSize($textFontSize)
+                    ->setColor(Color::SKYBLUE());
+            }
+
+            if ($element instanceof HitPointsView) {
+                $element
+                    ->setName($playerHitPointsString)
+                    ->setPosX($playerHitPointsPosX)
+                    ->setPosY(0)
+                    ->setFontSize($textFontSize)
+                    ->setColor(Color::GREEN());
+            }
+
+            if ($element instanceof DamageView) {
+                $element
+                    ->setName($playerDamageString)
+                    ->setPosX($playerDamagePosX)
+                    ->setPosY(0)
+                    ->setFontSize($textFontSize)
+                    ->setColor(Color::MAROON());
+            }
+        }
     }
 }

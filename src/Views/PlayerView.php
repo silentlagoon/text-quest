@@ -6,12 +6,40 @@ use App\Entities\Living\Player;
 use raylib\Color;
 use raylib\Rectangle;
 
-class PlayerView
+class PlayerView extends AbstractView
 {
     protected Rectangle $rectangle;
     protected Player $player;
     protected Color $color;
     protected int $namePositionDelta;
+    protected bool $collision;
+
+    public function draw(): void
+    {
+        DrawText(
+            $this->getPlayer()->getName(),
+            GetScreenWidth() / 2,
+            (GetScreenHeight() / 2) - $this->getNamePositionDelta(),
+            20,
+            $this->getCollision() ? Color::SKYBLUE() : Color::BLACK()
+        );
+    }
+
+    /**
+     * @return void
+     */
+    public function checkCollision(): void
+    {
+       $this->collision = CheckCollisionPointRec(GetMousePosition(), $this->getRectangle());
+    }
+
+    /**
+     * @return bool
+     */
+    public function getCollision(): bool
+    {
+        return $this->collision;
+    }
 
     /**
      * @return Rectangle
