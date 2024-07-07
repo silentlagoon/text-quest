@@ -1,6 +1,7 @@
 <?php
 
 use App\Entities\Living\Monster;
+use App\Events\FightEvent;
 
 return [
     [
@@ -15,7 +16,7 @@ return [
         'name' => 'Steel door entrance',
         'description' => 'Room seems to be some sort of abandoned warehouse',
         'events' => [
-            'fight' => [
+            new FightEvent([
                 [
                     new Monster('kutya', 15,5),
                     new Monster('kutya', 15,5),
@@ -26,7 +27,7 @@ return [
                 [
                     new Monster('kutya', 15,5),
                 ]
-            ]
+            ])
         ],
         'exits' => ['start_room', 'room_with_fight_2'],
     ],

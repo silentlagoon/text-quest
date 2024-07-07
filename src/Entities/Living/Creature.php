@@ -4,6 +4,7 @@ namespace App\Entities\Living;
 
 class Creature
 {
+    const MIN_HIT_POINTS = 0;
     protected string $name;
     protected int $hitPoints;
     protected int $damage;
@@ -37,5 +38,24 @@ class Creature
     public function getDamage(): int
     {
         return $this->damage;
+    }
+    public function setHitPoints(int $hitPoints): void
+    {
+        if ($hitPoints < static::MIN_HIT_POINTS) {
+            $this->hitPoints = static::MIN_HIT_POINTS;
+        } else {
+            $this->hitPoints = $hitPoints;
+        }
+    }
+    protected function isDead(): bool
+    {
+        return $this->hitPoints === static::MIN_HIT_POINTS;
+    }
+    public function fight(Creature $monster): void
+    {
+        while (!$this->isDead() && !$monster->isDead()) {
+            $monster->setHitPoints($monster->getHitPoints() - $this->getDamage());
+            $this->setHitPoints($this->getHitPoints() - $monster->getDamage());
+        }
     }
 }

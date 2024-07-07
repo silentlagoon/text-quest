@@ -4,11 +4,13 @@ namespace App;
 
 use App\Entities\Living\Player;
 use App\Entities\Quest\Room;
+use App\Events\FightEvent;
 use App\Views\PlayerView;
 use Illuminate\Support\Collection;
 use raylib\Color;
 use raylib\Font;
 use raylib\Rectangle;
+use Relay\Event;
 use const raylib\MouseButton\MOUSE_BUTTON_LEFT;
 
 class Game
@@ -166,6 +168,12 @@ class Game
             Color::BLACK()
         );
 
+        foreach ($this->currentRoom->getEvents() as $event) {
+            if ($event instanceof FightEvent) {
+                $event->initiateFightEvent($this->getCurrentPlayer());
+            }
+        }
+
         $exits = $this->currentRoom->getExits();
 
         $roomExitDeltaY = 0;
@@ -202,6 +210,7 @@ class Game
             $roomExitDeltaY += $roomExitsTextDeltaY;
         }
     }
+
 
     protected function drawMainScreenScene(): void
     {
