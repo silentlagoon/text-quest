@@ -2,13 +2,16 @@
 
 namespace App\Entities\Living;
 
-class Creature
+use App\Contracts\Entities\ICreature;
+
+class Creature implements ICreature
 {
     const MIN_HIT_POINTS = 0;
     protected static string $hh = 'child';
     protected string $name;
     protected int $hitPoints;
     protected int $damage;
+    protected string $fightColor;
 
     public function __construct(string $name, int $hitPoints, int $damage)
     {
@@ -48,6 +51,11 @@ class Creature
         } else {
             $this->hitPoints = $hitPoints;
         }
+    }
+
+    public function getFightColor(): string
+    {
+        return $this->fightColor;
     }
 
     protected function isDead(): bool
