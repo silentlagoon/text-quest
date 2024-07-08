@@ -4,6 +4,7 @@ namespace App;
 
 use App\Contracts\Views\UI\StatusBar\IStatusBarElement;
 use App\Entities\Living\Creature;
+use App\Entities\Living\Monster;
 use App\Entities\Living\Player;
 use App\Entities\Quest\Room;
 use App\Events\FightEvent;
@@ -115,6 +116,7 @@ class Game
         $textRoomNamePositionY =  intval(GetScreenHeight() / 6);
         $roomExitsTextDeltaY = 32;
         $fontSize = 32;
+        $namesFontSize = 20;
 
         $currentRoomName = $this->currentRoom->getName() . ':';
 
@@ -144,13 +146,59 @@ class Game
 
         foreach ($this->currentRoom->getEvents() as $event) {
             if ($event instanceof FightEvent) {
+                $fightEventActors = $event->getActors();
+                $fightEventActors[] = $this->getCurrentPlayer();
+
+                $monsterNames = [];
+                foreach ($fightEventActors as $fightEventActor) {
+                    if ($fightEventActor instanceof Monster) {
+                        $monsterNames[] = $fightEventActor->getName();
+                    }
+                }
+
+                $longestMonsterName = max($monsterNames);
+                $monsterNameLenght = MeasureText($longestMonsterName, $namesFontSize);
+                $monsterNameAndIndent = $monsterNameLenght + 10;
+                $monsterNameDeltaPosition = ((count($monsterNames) * $monsterNameAndIndent) / 2) - $monsterNameAndIndent / 2;
+                $delta = 0;
+
+                foreach ($fightEventActors as $fightEventActor) {
+                    if ($fightEventActor instanceof Player) {
+                        $playerCirclePositionX = GetScreenWidth() / 2;
+                        $playerCirclePositionY = GetScreenHeight() / 2 + 60;
+                        $playerNamePositionX = MeasureText($this->getCurrentPlayer()->getName(), $namesFontSize) / 2;
+                        DrawCircle($playerCirclePositionX, $playerCirclePositionY, 10, Color::BLUE());
+                        DrawText(
+                            $this->getCurrentPlayer()->getName(),
+                            $playerCirclePositionX - $playerNamePositionX,
+                            $playerCirclePositionY + 15,
+                            20,
+                            Color::BLACK()
+                        );
+                    }
+
+                    if ($fightEventActor instanceof Monster) {
+                        $monsterCirclePositionX = GetScreenWidth() / 2 - $monsterNameDeltaPosition + $delta;
+                        $monsterCirclePositionY = GetScreenHeight() / 2 - 50;
+                        $monsterNamePositionX = MeasureText($fightEventActor->getName(), $namesFontSize) / 2;
+                        DrawCircle($monsterCirclePositionX, $monsterCirclePositionY, 10, Color::MAROON());
+                        DrawText(
+                            $fightEventActor->getName(),
+                            $monsterCirclePositionX - $monsterNamePositionX,
+                            $monsterCirclePositionY + 15,
+                            20,
+                            Color::BLACK()
+                        );
+                        $delta = $delta + $monsterNameAndIndent;
+                    }
+                }
                 $event->initiateFightEvent($this->getCurrentPlayer());
             }
         }
 
         $exits = $this->currentRoom->getExits();
 
-        $roomExitDeltaY = 0;
+        $roomExitDeltaY = 100;
 
         foreach ($exits as $exit) {
             $roomExit = $this->findRoomById($exit);

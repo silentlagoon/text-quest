@@ -15,11 +15,18 @@ class FightEvent
     {
         foreach ($this->fightEvents as $fightEvent) {
             foreach ($fightEvent as $monster) {
-
                 $player->fight($monster);
-
             }
         }
     }
-
+    public function getActors(): array
+    {
+        $actors = [];
+        foreach ($this->fightEvents as $fightEvent) {
+            foreach ($fightEvent as $monster) {
+                $actors[] = $monster;
+            }
+        }
+        return $actors;
+    }
 }
