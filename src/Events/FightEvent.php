@@ -19,19 +19,19 @@ class FightEvent implements IEvent
 
     public function handle(Player $player): void
     {
-        $namesFontSize = 20;
+        $nameFontSize = 20;
         $fightEventActors = $this->getActors();
         $delta = 0;
 
         $playerCirclePositionX = GetScreenWidth() / 2;
         $playerCirclePositionY = GetScreenHeight() / 2 + 60;
-        $this->drawActor($player, $playerCirclePositionX, $playerCirclePositionY, $namesFontSize);
+        $this->drawActor($player, $playerCirclePositionX, $playerCirclePositionY, $nameFontSize);
 
         foreach ($fightEventActors as $fightEventActor) {
-            $creatureNameDeltaPosition = $this->getCreatureNameDeltaPosition($namesFontSize);
+            $creatureNameDeltaPosition = $this->getCreatureNameDeltaPosition($nameFontSize);
             $monsterCirclePositionX = GetScreenWidth() / 2 - $creatureNameDeltaPosition->getMonsterNameDeltaPosition() + $delta;
             $monsterCirclePositionY = GetScreenHeight() / 2 - 50;
-            $this->drawActor($fightEventActor, $monsterCirclePositionX, $monsterCirclePositionY, $namesFontSize);
+            $this->drawActor($fightEventActor, $monsterCirclePositionX, $monsterCirclePositionY, $nameFontSize);
 
             $delta = $delta + $creatureNameDeltaPosition->getMonsterNameAndIndent();
         }
@@ -39,20 +39,36 @@ class FightEvent implements IEvent
         $this->initiateFightEvent($player);
     }
 
-    public function drawActor(ICreature $creature, $circlePosX, $circlePosY, $nameFontSize)
+    public function drawActor(ICreature $creature, $circlePosX, $circlePosY, $nameFontSize): void
     {
         $creatureName = $creature->getName();
         $playerNamePositionX = $this->calculateCreatureNamePosition($creatureName, $nameFontSize);
 
         $color = $creature->getFightColor();
+        $indent = 15;
 
         DrawCircle($circlePosX, $circlePosY, 10, Color::$color());
         DrawText(
             $creature->getName(),
             $circlePosX - $playerNamePositionX,
-            $circlePosY + 15,
+            $circlePosY + $indent,
             20,
             Color::BLACK()
+        );
+        DrawRectangleLines(
+            $circlePosX - $playerNamePositionX,
+            $circlePosY + $indent + 25,
+            MeasureText($creature->getName(), $nameFontSize),
+            15,
+            Color::DARKGREEN()
+        );
+        DrawRectangleGradientH(
+            $circlePosX - $playerNamePositionX,
+            $circlePosY + $indent + 25,
+            MeasureText($creature->getName(), $nameFontSize),
+            15,
+            Color::DARKGREEN(),
+            Color::LIME()
         );
     }
 

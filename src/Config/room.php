@@ -23,8 +23,6 @@ return [
                 ],
                 [
                     new Monster('kutya', 15,5),
-                ],
-                [
                     new Monster('kutya', 15,5),
                 ]
             ])

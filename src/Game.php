@@ -111,7 +111,7 @@ class Game
         }
     }
 
-    protected function drawCurrentRoom()
+    protected function drawCurrentRoom(): void
     {
         $textRoomNamePositionX =  intval(GetScreenWidth() / 6 - 100);
         $textRoomNamePositionY =  intval(GetScreenHeight() / 6);
@@ -151,7 +151,7 @@ class Game
 
         $exits = $this->currentRoom->getExits();
 
-        $roomExitDeltaY = 100;
+        $roomExitDeltaY = 120;
 
         foreach ($exits as $exit) {
             $roomExit = $this->findRoomById($exit);

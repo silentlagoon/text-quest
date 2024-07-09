@@ -7,7 +7,6 @@ use App\Contracts\Entities\ICreature;
 class Creature implements ICreature
 {
     const MIN_HIT_POINTS = 0;
-    protected static string $hh = 'child';
     protected string $name;
     protected int $hitPoints;
     protected int $damage;
@@ -46,7 +45,7 @@ class Creature implements ICreature
 
     public function setHitPoints(int $hitPoints): void
     {
-        if ($hitPoints < static::$hh) {
+        if ($hitPoints < static::MIN_HIT_POINTS) {
             $this->hitPoints = static::MIN_HIT_POINTS;
         } else {
             $this->hitPoints = $hitPoints;
@@ -60,7 +59,10 @@ class Creature implements ICreature
 
     protected function isDead(): bool
     {
-        return $this->hitPoints === static::MIN_HIT_POINTS;
+        if ($this->hitPoints <= static::MIN_HIT_POINTS) {
+            return true;
+        }
+        return false;
     }
 
     public function fight(Creature $monster): void
