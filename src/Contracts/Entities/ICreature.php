@@ -10,6 +10,7 @@ interface ICreature
     public function getHitPoints(): int;
     public function getDamage(): int;
     public function setHitPoints(int $hitPoints): void;
-    public function fight(Creature $monster): void;
+    public function fight(Creature $monster, int $framesCounter): void;
     public function getFightColor(): string;
+    public function getCreatureHitPointsPercentage(): float;
 }

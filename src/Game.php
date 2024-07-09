@@ -30,6 +30,7 @@ class Game
     protected ?Player $currentPlayer;
     protected Collection $rooms;
     protected Room $currentRoom;
+    protected int $framesCounter = 0;
 
     public function __construct(Collection $playersAvailable)
     {
@@ -40,7 +41,7 @@ class Game
         $this->currentRoom = $this->findRoomById(static::START_ROOM_ID);
     }
 
-    public function start()
+    public function start(): void
     {
         $lightGray = new Color(245, 245, 245, 255);
 
@@ -56,6 +57,7 @@ class Game
 
         while (!WindowShouldClose())
         {
+            $this->framesCounter++;
             //Updating variables Before BeginDrawing()
             $selectionScreenPlayers = $this->getSelectionScreenPlayers();
             if ($this->isCurrentPlayerSelected()) {
@@ -146,7 +148,7 @@ class Game
 
         /** @var IEvent $event */
         foreach ($this->currentRoom->getEvents() as $event) {
-            $event->handle($this->getCurrentPlayer());
+            $event->handle($this->getCurrentPlayer(), $this->framesCounter);
         }
 
         $exits = $this->currentRoom->getExits();

@@ -17,7 +17,7 @@ class FightEvent implements IEvent
         return $this->fightEvents = $fightEvents;
     }
 
-    public function handle(Player $player): void
+    public function handle(Player $player, int $framesCounter): void
     {
         $nameFontSize = 20;
         $fightEventActors = $this->getActors();
@@ -36,10 +36,10 @@ class FightEvent implements IEvent
             $delta = $delta + $creatureNameDeltaPosition->getMonsterNameAndIndent();
         }
 
-        $this->initiateFightEvent($player);
+        $this->initiateFightEvent($player, $framesCounter);
     }
 
-    public function drawActor(ICreature $creature, $circlePosX, $circlePosY, $nameFontSize): void
+    public function drawActor(ICreature $creature, int $circlePosX, int $circlePosY, int $nameFontSize): void
     {
         $creatureName = $creature->getName();
         $playerNamePositionX = $this->calculateCreatureNamePosition($creatureName, $nameFontSize);
@@ -65,10 +65,10 @@ class FightEvent implements IEvent
         DrawRectangleGradientH(
             $circlePosX - $playerNamePositionX,
             $circlePosY + $indent + 25,
-            MeasureText($creature->getName(), $nameFontSize),
+            (MeasureText($creature->getName(), $nameFontSize) / 100) * $creature->getCreatureHitPointsPercentage(),
             15,
             Color::DARKGREEN(),
-            Color::LIME()
+            Color::GREEN()
         );
     }
 
@@ -88,11 +88,11 @@ class FightEvent implements IEvent
         return MeasureText($name, $fontSize) / 2;
     }
 
-    protected function initiateFightEvent(Player $player): void
+    protected function initiateFightEvent(Player $player, int $framesCounter): void
     {
         foreach ($this->fightEvents as $fightEvent) {
             foreach ($fightEvent as $monster) {
-                $player->fight($monster);
+                $player->fight($monster, $framesCounter);
             }
         }
     }

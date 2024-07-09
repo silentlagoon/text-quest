@@ -8,14 +8,16 @@ class Creature implements ICreature
 {
     const MIN_HIT_POINTS = 0;
     protected string $name;
+    protected int $maxHitPoints;
     protected int $hitPoints;
     protected int $damage;
     protected string $fightColor;
 
-    public function __construct(string $name, int $hitPoints, int $damage)
+    public function __construct(string $name, int $maxHitPoints, int $damage)
     {
         $this->name = $name;
-        $this->hitPoints = $hitPoints;
+        $this->maxHitPoints = $maxHitPoints;
+        $this->hitPoints = $maxHitPoints;
         $this->damage = $damage;
     }
 
@@ -51,6 +53,14 @@ class Creature implements ICreature
             $this->hitPoints = $hitPoints;
         }
     }
+    protected function getMaxHitPoints(): int
+    {
+        return $this->maxHitPoints;
+    }
+    public function getCreatureHitPointsPercentage(): float
+    {
+        return $this->getHitPoints() / ($this->getMaxHitPoints() / 100);
+    }
 
     public function getFightColor(): string
     {
@@ -65,11 +75,13 @@ class Creature implements ICreature
         return false;
     }
 
-    public function fight(Creature $monster): void
+    public function fight(Creature $monster, int $framesCounter): void
     {
-        while (!$this->isDead() && !$monster->isDead()) {
-            $monster->setHitPoints($monster->getHitPoints() - $this->getDamage());
-            $this->setHitPoints($this->getHitPoints() - $monster->getDamage());
+        $everyTwoSeconds = (($framesCounter / 120) % 4) == 1;
+        while (!$this->isDead() && !$monster->isDead() && $everyTwoSeconds) {
+                $monster->setHitPoints($monster->getHitPoints() - $this->getDamage());
+                $this->setHitPoints($this->getHitPoints() - $monster->getDamage());
+                $framesCounter = 0;
+            }
         }
-    }
 }

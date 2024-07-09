@@ -6,5 +6,5 @@ use App\Entities\Living\Player;
 
 interface IEvent
 {
-    public function handle(Player $player): void;
+    public function handle(Player $player, int $framesCounter): void;
 }
