@@ -77,9 +77,7 @@ class Creature implements ICreature
 
     public function fight(Creature $monster): void
     {
-        //while (!$this->isDead() && !$monster->isDead()) {
-                $monster->setHitPoints($monster->getHitPoints() - $this->getDamage());
-                $this->setHitPoints($this->getHitPoints() - $monster->getDamage());
-            //}
+        $monster->setHitPoints($monster->getHitPoints() - $this->getDamage());
+        $this->setHitPoints($this->getHitPoints() - $monster->getDamage());
     }
 }
