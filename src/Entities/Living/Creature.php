@@ -67,7 +67,7 @@ class Creature implements ICreature
         return $this->fightColor;
     }
 
-    protected function isDead(): bool
+    public function isDead(): bool
     {
         if ($this->hitPoints <= static::MIN_HIT_POINTS) {
             return true;
@@ -75,13 +75,11 @@ class Creature implements ICreature
         return false;
     }
 
-    public function fight(Creature $monster, int $framesCounter): void
+    public function fight(Creature $monster): void
     {
-        $everyTwoSeconds = (($framesCounter / 120) % 4) == 1;
-        while (!$this->isDead() && !$monster->isDead() && $everyTwoSeconds) {
+        //while (!$this->isDead() && !$monster->isDead()) {
                 $monster->setHitPoints($monster->getHitPoints() - $this->getDamage());
                 $this->setHitPoints($this->getHitPoints() - $monster->getDamage());
-                $framesCounter = 0;
-            }
-        }
+            //}
+    }
 }

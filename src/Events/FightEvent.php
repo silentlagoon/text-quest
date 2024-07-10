@@ -6,40 +6,52 @@ use App\Contracts\Entities\ICreature;
 use App\Contracts\Events\IEvent;
 use App\DTO\CreatureNameDeltaPosition;
 use App\Entities\Living\Player;
-use raylib\Color;
 
 class FightEvent implements IEvent
 {
     protected array $fightEvents;
+    protected array $player = [];
+    protected array $actors = [];
+    protected array $colors;
+    protected int $eventCounter = 0;
 
     public function __construct($fightEvents)
     {
         return $this->fightEvents = $fightEvents;
     }
 
-    public function handle(Player $player, int $framesCounter): void
+    public function calculate(Player $player): void
     {
-        $nameFontSize = 20;
-        $fightEventActors = $this->getActors();
-        $delta = 0;
+        $everyTwoSeconds = ((int)($this->eventCounter / 100) % 2) == 1;
 
-        $playerCirclePositionX = GetScreenWidth() / 2;
-        $playerCirclePositionY = GetScreenHeight() / 2 + 60;
-        $this->drawActor($player, $playerCirclePositionX, $playerCirclePositionY, $nameFontSize);
+        if ($this->eventCounter === 0 || $everyTwoSeconds) {
+            $nameFontSize = 20;
+            $fightEventActors = $this->getActors();
+            $delta = 0;
 
-        foreach ($fightEventActors as $fightEventActor) {
-            $creatureNameDeltaPosition = $this->getCreatureNameDeltaPosition($nameFontSize);
-            $monsterCirclePositionX = GetScreenWidth() / 2 - $creatureNameDeltaPosition->getMonsterNameDeltaPosition() + $delta;
-            $monsterCirclePositionY = GetScreenHeight() / 2 - 50;
-            $this->drawActor($fightEventActor, $monsterCirclePositionX, $monsterCirclePositionY, $nameFontSize);
+            $playerCirclePositionX = GetScreenWidth() / 2;
+            $playerCirclePositionY = GetScreenHeight() / 2 + 60;
+            $this->player = [$player, $playerCirclePositionX, $playerCirclePositionY, $nameFontSize];
 
-            $delta = $delta + $creatureNameDeltaPosition->getMonsterNameAndIndent();
+            /** @var ICreature $fightEventActor */
+            foreach ($fightEventActors as $fightEventActor) {
+                $creatureNameDeltaPosition = $this->getCreatureNameDeltaPosition($nameFontSize);
+                $monsterCirclePositionX = GetScreenWidth() / 2 - $creatureNameDeltaPosition->getMonsterNameDeltaPosition() + $delta;
+                $monsterCirclePositionY = GetScreenHeight() / 2 - 50;
+                $this->actors[] = [$fightEventActor, $monsterCirclePositionX, $monsterCirclePositionY, $nameFontSize];
+
+                $delta = $delta + $creatureNameDeltaPosition->getMonsterNameAndIndent();
+            }
+
+
+            if ($everyTwoSeconds) {
+                $this->fight($player);
+                $this->eventCounter = 0;
+            }
         }
-
-        $this->initiateFightEvent($player, $framesCounter);
     }
 
-    public function drawActor(ICreature $creature, int $circlePosX, int $circlePosY, int $nameFontSize): void
+    public function drawActor(ICreature $creature, int $circlePosX, int $circlePosY, int $nameFontSize)
     {
         $creatureName = $creature->getName();
         $playerNamePositionX = $this->calculateCreatureNamePosition($creatureName, $nameFontSize);
@@ -47,29 +59,55 @@ class FightEvent implements IEvent
         $color = $creature->getFightColor();
         $indent = 15;
 
-        DrawCircle($circlePosX, $circlePosY, 10, Color::$color());
+        DrawCircle($circlePosX, $circlePosY, 10, $this->getColor($color));
         DrawText(
             $creature->getName(),
             $circlePosX - $playerNamePositionX,
             $circlePosY + $indent,
             20,
-            Color::BLACK()
+           $this->getColor('BLACK')
         );
         DrawRectangleLines(
             $circlePosX - $playerNamePositionX,
             $circlePosY + $indent + 25,
             MeasureText($creature->getName(), $nameFontSize),
             15,
-            Color::DARKGREEN()
+            $this->getColor('DARKGREEN')
         );
         DrawRectangleGradientH(
             $circlePosX - $playerNamePositionX,
             $circlePosY + $indent + 25,
-            (MeasureText($creature->getName(), $nameFontSize) / 100) * $creature->getCreatureHitPointsPercentage(),
+            (int) ((MeasureText($creature->getName(), $nameFontSize) / 100) * $creature->getCreatureHitPointsPercentage()),
             15,
-            Color::DARKGREEN(),
-            Color::GREEN()
+            $this->getColor('DARKGREEN'),
+            $this->getColor('GREEN')
         );
+    }
+
+    protected function getColor(string $color)
+    {
+        return $this->colors[$color];
+    }
+
+    public function draw(array $colors)
+    {
+        $this->colors = $colors;
+
+        $this->drawActor(...$this->player);
+
+        foreach ($this->actors as $actor) {
+            $this->drawActor(...$actor);
+        }
+    }
+
+    public function isCounterNeeded(): bool
+    {
+        return true;
+    }
+
+    public function incrementCounter(int $qty)
+    {
+        $this->eventCounter += $qty;
     }
 
     protected function getCreatureNameDeltaPosition($fontSize): CreatureNameDeltaPosition
@@ -88,11 +126,14 @@ class FightEvent implements IEvent
         return MeasureText($name, $fontSize) / 2;
     }
 
-    protected function initiateFightEvent(Player $player, int $framesCounter): void
+    public function fight(Player $player): void
     {
         foreach ($this->fightEvents as $fightEvent) {
             foreach ($fightEvent as $monster) {
-                $player->fight($monster, $framesCounter);
+                if (!$player->isDead() && !$monster->isDead()) {
+                    $player->fight($monster);
+                    return;
+                }
             }
         }
     }

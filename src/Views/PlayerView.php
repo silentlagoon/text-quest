@@ -14,14 +14,14 @@ class PlayerView extends AbstractView
     protected int $namePositionDelta;
     protected bool $collision;
 
-    public function draw(): void
+    public function draw(?Color $trueColor = null, ?Color $falseColor = null): void
     {
         DrawText(
             $this->getPlayer()->getName(),
             GetScreenWidth() / 2,
             (GetScreenHeight() / 2) - $this->getNamePositionDelta(),
             20,
-            $this->getCollision() ? Color::SKYBLUE() : Color::BLACK()
+            $this->getCollision() ? $trueColor : $falseColor
         );
     }
 

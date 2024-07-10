@@ -14,7 +14,7 @@ abstract class BaseStatusBarView extends AbstractView implements IStatusBarEleme
     protected int $fontSize;
     protected Color $color;
 
-    public function draw(): void
+    public function draw(?Color $trueColor = null, ?Color $falseColor = null): void
     {
         DrawText(
             $this->name,

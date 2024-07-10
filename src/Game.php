@@ -4,20 +4,15 @@ namespace App;
 
 use App\Contracts\Events\IEvent;
 use App\Contracts\Views\UI\StatusBar\IStatusBarElement;
-use App\Entities\Living\Creature;
-use App\Entities\Living\Monster;
 use App\Entities\Living\Player;
 use App\Entities\Quest\Room;
-use App\Events\FightEvent;
 use App\Views\PlayerView;
 use App\Views\UI\StatusBar\DamageView;
 use App\Views\UI\StatusBar\HitPointsView;
 use App\Views\UI\StatusBar\NameView;
 use Illuminate\Support\Collection;
 use raylib\Color;
-use raylib\Font;
 use raylib\Rectangle;
-use Relay\Event;
 use const raylib\MouseButton\MOUSE_BUTTON_LEFT;
 
 class Game
@@ -30,7 +25,7 @@ class Game
     protected ?Player $currentPlayer;
     protected Collection $rooms;
     protected Room $currentRoom;
-    protected int $framesCounter = 0;
+    protected array $colors = [];
 
     public function __construct(Collection $playersAvailable)
     {
@@ -44,6 +39,15 @@ class Game
     public function start(): void
     {
         $lightGray = new Color(245, 245, 245, 255);
+        $this->colors = [
+            'DARKGREEN' => Color::DARKGREEN(),
+            'GREEN' => Color::GREEN(),
+            'MAROON' => Color::MAROON(),
+            'BLUE' => Color::BLUE(),
+            'BLACK' => Color::BLACK(),
+            'DARKGRAY' => Color::DARKGRAY(),
+            'SKYBLUE' => Color::SKYBLUE(),
+        ];
 
         InitWindow(static::SCREEN_WIDTH, static::SCREEN_HEIGHT, "Dungeon explorers");
 
@@ -57,15 +61,28 @@ class Game
 
         while (!WindowShouldClose())
         {
-            $this->framesCounter++;
             //Updating variables Before BeginDrawing()
             $selectionScreenPlayers = $this->getSelectionScreenPlayers();
+
+            if ($this->isCurrentPlayerSelected()) {
+                /** @var IEvent $event */
+                if ($this->currentRoom->getEvents()) {
+                    foreach ($this->currentRoom->getEvents() as $event) {
+                        if ($event->isCounterNeeded()) {
+                            $event->calculate($this->getCurrentPlayer());
+                            $event->incrementCounter(1);
+                        }
+                    }
+                }
+            }
+
             if ($this->isCurrentPlayerSelected()) {
                 $this->setUIElements($uiElements);
             }
 
             BeginDrawing();
 
+                DrawFPS(10, 10);
                 ClearBackground($lightGray);
 
                 if (!$this->isCurrentPlayerSelected()) {
@@ -101,7 +118,7 @@ class Game
     {
         /** @var PlayerView $playerView */
         foreach ($selectionScreenPlayers as $playerView) {
-            $playerView->draw();
+            $playerView->draw($this->colors['SKYBLUE'], $this->colors['BLACK']);
         }
     }
 
@@ -127,7 +144,7 @@ class Game
             $textRoomNamePositionX,
             $textRoomNamePositionY,
             $fontSize,
-            Color::BLACK()
+            $this->colors['BLACK']
         );
 
         DrawLine(
@@ -135,7 +152,7 @@ class Game
             $textRoomNamePositionY + $fontSize,
             MeasureText($currentRoomName, $fontSize) + $textRoomNamePositionX + 5,
             $textRoomNamePositionY + $fontSize,
-            Color::DARKGRAY()
+            $this->colors['DARKGRAY']
         );
 
         DrawText(
@@ -143,12 +160,12 @@ class Game
             $textRoomNamePositionX,
             $textRoomNamePositionY + $fontSize + 10,
             $fontSize,
-            Color::BLACK()
+            $this->colors['BLACK']
         );
 
         /** @var IEvent $event */
         foreach ($this->currentRoom->getEvents() as $event) {
-            $event->handle($this->getCurrentPlayer(), $this->framesCounter);
+            $event->draw($this->colors);
         }
 
         $exits = $this->currentRoom->getExits();
@@ -174,12 +191,11 @@ class Game
                 $textRoomNamePositionX,
                 GetScreenHeight() / 2 + $roomExitDeltaY,
                 $fontSize,
-                $collision ? Color::SKYBLUE() : Color::DARKGREEN()
+                $collision ? $this->colors['SKYBLUE'] : $this->colors['DARKGREEN']
             );
 
             if ($collision) {
                 if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                    dump($roomExit);
                     $this->setCurrentRoom($roomExit);
                 }
             }
@@ -285,7 +301,7 @@ class Game
                     ->setPosX($textStartPositionX)
                     ->setPosY(0)
                     ->setFontSize($textFontSize)
-                    ->setColor(Color::SKYBLUE());
+                    ->setColor($this->colors['SKYBLUE']);
             }
 
             if ($element instanceof HitPointsView) {
@@ -294,7 +310,7 @@ class Game
                     ->setPosX($playerHitPointsPosX)
                     ->setPosY(0)
                     ->setFontSize($textFontSize)
-                    ->setColor(Color::GREEN());
+                    ->setColor($this->colors['GREEN']);
             }
 
             if ($element instanceof DamageView) {
@@ -303,7 +319,7 @@ class Game
                     ->setPosX($playerDamagePosX)
                     ->setPosY(0)
                     ->setFontSize($textFontSize)
-                    ->setColor(Color::MAROON());
+                    ->setColor($this->colors['MAROON']);
             }
         }
     }
