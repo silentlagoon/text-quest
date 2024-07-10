@@ -62,9 +62,14 @@ class Game
         while (!WindowShouldClose())
         {
             //Updating variables Before BeginDrawing()
-            $selectionScreenPlayers = $this->getSelectionScreenPlayers();
+            if (!$this->isCurrentPlayerSelected()) {
+                $selectionScreenPlayers = $this->getSelectionScreenPlayers();
+            }
 
             if ($this->isCurrentPlayerSelected()) {
+                $this->setUIElements($uiElements);
+
+                //Processing events calculations
                 /** @var IEvent $event */
                 if ($this->currentRoom->getEvents()) {
                     foreach ($this->currentRoom->getEvents() as $event) {
@@ -74,10 +79,6 @@ class Game
                         }
                     }
                 }
-            }
-
-            if ($this->isCurrentPlayerSelected()) {
-                $this->setUIElements($uiElements);
             }
 
             BeginDrawing();
