@@ -18,12 +18,12 @@ return [
         'events' => [
             new FightEvent([
                 [
-                    new Monster('kutya', 100,5),
-                    new Monster('kutya', 100,5),
+                    new Monster('kutya', 10,5),
+                    new Monster('kutya', 10,5),
                 ],
                 [
-                    new Monster('kutya', 100,5),
-                    new Monster('kutya', 100,5),
+                    new Monster('kutya', 10,5),
+                    new Monster('kutya', 10,5),
                 ]
             ])
         ],

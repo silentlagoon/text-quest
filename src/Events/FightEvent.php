@@ -19,6 +19,24 @@ class FightEvent implements IEvent
     {
         return $this->fightEvents = $fightEvents;
     }
+    public function isFinished(): bool
+    {
+        if ($this->isAllMonstersDead()) {
+            return true;
+        }
+        return false;
+    }
+    protected function isAllMonstersDead(): bool
+    {
+        $isAllDead = true;
+
+        foreach ($this->getActors() as $monster) {
+            if (!$monster->isDead()) {
+                $isAllDead = false;
+            }
+        }
+        return $isAllDead;
+    }
 
     public function calculate(Player $player): void
     {
@@ -51,7 +69,7 @@ class FightEvent implements IEvent
         }
     }
 
-    public function drawActor(ICreature $creature, int $circlePosX, int $circlePosY, int $nameFontSize)
+    public function drawActor(ICreature $creature, int $circlePosX, int $circlePosY, int $nameFontSize): void
     {
         $creatureName = $creature->getName();
         $playerNamePositionX = $this->calculateCreatureNamePosition($creatureName, $nameFontSize);
@@ -89,7 +107,7 @@ class FightEvent implements IEvent
         return $this->colors[$color];
     }
 
-    public function draw(array $colors)
+    public function draw(array $colors): void
     {
         $this->colors = $colors;
 
@@ -105,7 +123,7 @@ class FightEvent implements IEvent
         return true;
     }
 
-    public function incrementCounter(int $qty)
+    public function incrementCounter(int $qty): void
     {
         $this->eventCounter += $qty;
     }
@@ -160,5 +178,23 @@ class FightEvent implements IEvent
         }
 
         return $monsterNames;
+    }
+    protected function countActors(): int
+    {
+        return count($this->getActors());
+    }
+    protected function getMonsterName(): string
+    {
+        foreach ($this->getActors() as $monster) {
+            return $monster->getName();
+        }
+    }
+    public function announceMessage(): string
+    {
+        return $this->countActors() . ' ' . $this->getMonsterName() . ' ' . 'attack you!';
+    }
+    public function confirmationMessage(): string
+    {
+        return 'Do you want to fight?';
     }
 }

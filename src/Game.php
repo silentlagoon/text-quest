@@ -6,6 +6,7 @@ use App\Contracts\Events\IEvent;
 use App\Contracts\Views\UI\StatusBar\IStatusBarElement;
 use App\Entities\Living\Player;
 use App\Entities\Quest\Room;
+use App\Events\EventConfirmationWindow;
 use App\Views\PlayerView;
 use App\Views\UI\StatusBar\DamageView;
 use App\Views\UI\StatusBar\HitPointsView;
@@ -73,9 +74,11 @@ class Game
                 /** @var IEvent $event */
                 if ($this->currentRoom->getEvents()) {
                     foreach ($this->currentRoom->getEvents() as $event) {
-                        if ($event->isCounterNeeded()) {
-                            $event->calculate($this->getCurrentPlayer());
-                            $event->incrementCounter(1);
+                        if (!$event->isFinished()) {
+                            if ($event->isCounterNeeded()) {
+                                $event->calculate($this->getCurrentPlayer());
+                                $event->incrementCounter(1);
+                            }
                         }
                     }
                 }
@@ -83,7 +86,7 @@ class Game
 
             BeginDrawing();
 
-                DrawFPS(10, 10);
+                DrawFPS(10, 20);
                 ClearBackground($lightGray);
 
                 if (!$this->isCurrentPlayerSelected()) {
@@ -166,7 +169,54 @@ class Game
 
         /** @var IEvent $event */
         foreach ($this->currentRoom->getEvents() as $event) {
-            $event->draw($this->colors);
+            if (!$event->isFinished()) {
+                $textRoomNamePositionY =  intval(GetScreenHeight() / 6);
+                $announceMessagePosY = $textRoomNamePositionY + $fontSize + 20 + $fontSize;
+                $announceMessagePosX = GetScreenWidth() / 2 - (MeasureText($event->announceMessage(), $fontSize) / 2);
+                $messageDelta = (MeasureText($event->announceMessage(), $fontSize) - MeasureText($event->confirmationMessage(), $fontSize)) / 2;
+                $textDelta = $fontSize;
+
+                DrawText(
+                    $event->announceMessage(),
+                    $announceMessagePosX,
+                    $announceMessagePosY,
+                    $fontSize,
+                    $this->colors['BLACK']
+                );
+                DrawText(
+                    $event->confirmationMessage(),
+                    $announceMessagePosX + $messageDelta,
+                    $announceMessagePosY + $textDelta,
+                    $fontSize,
+                    $this->colors['BLACK']
+                );
+
+                $yesRectangle = new Rectangle(GetScreenWidth() / 3, GetScreenHeight() / 2 + 50, 50, 40);
+                DrawRectangleRec($yesRectangle, $this->colors['DARKGREEN']);
+                DrawText(
+                    'YES',
+                    (GetScreenWidth() / 3) + 5,
+                    (GetScreenHeight() / 2 + 50) + 10,
+                    20,
+                    $this->colors['BLACK']);
+
+                $noRectangle = new Rectangle(GetScreenWidth() / 2 + 50, GetScreenHeight() / 2 + 50, 50, 40);
+                DrawRectangleRec($noRectangle, $this->colors['MAROON']);
+                DrawText(
+                    'NO',
+                    (GetScreenWidth() / 2 + 50) + 10,
+                    (GetScreenHeight() / 2 + 50) + 10,
+                    20,
+                    $this->colors['BLACK']);
+
+                $yesCollision = CheckCollisionPointRec(GetMousePosition(), $yesRectangle);
+                $noCollision = CheckCollisionPointRec(GetMousePosition(), $noRectangle);
+                if ($yesCollision) {
+                    if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                        $event->draw($this->colors);
+                    }
+                }
+            }
         }
 
         $exits = $this->currentRoom->getExits();
